@@ -16,6 +16,8 @@ buildscript {
 
 allprojects {
     repositories {
+//        maven { url '/home/haruki/git/androidx-master-dev/out/androidx/build/support_repo/' }
+        maven { url '/home/haruki/git/android/build/support_repo/' }
         google()
         jcenter()
     }
