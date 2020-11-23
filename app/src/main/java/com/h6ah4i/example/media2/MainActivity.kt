@@ -2,8 +2,6 @@ package com.h6ah4i.example.media2
 
 import android.content.ComponentName
 import android.content.ContentResolver
-import android.content.Context
-import android.media.AudioManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -11,13 +9,8 @@ import android.util.Log
 import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.media.AudioAttributesCompat
-import androidx.media.AudioFocusRequestCompat
-import androidx.media.AudioManagerCompat
 import androidx.media2.common.MediaItem
 import androidx.media2.common.SessionPlayer
-import androidx.media2.common.UriMediaItem
-import androidx.media2.player.MediaPlayer
 import androidx.media2.session.MediaController
 import androidx.media2.session.SessionCommandGroup
 import androidx.media2.session.SessionToken
@@ -40,7 +33,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initUI() {
-        textPlayerState.text = mapPlayerState(MediaPlayer.PLAYER_STATE_IDLE)
+        textPlayerState.text = mapPlayerState(SessionPlayer.PLAYER_STATE_IDLE)
 
         playlistAdapter = PlaylistAdapter(songFiles, object: PlaylistAdapter.PlaylistAdapterEventListener {
                 override fun onClickPlaylistItem(position: Int, file: String) {
@@ -70,9 +63,9 @@ class MainActivity : AppCompatActivity() {
 
         buttonRepeat.setOnClickListener{
             controller.repeatMode = when (controller.repeatMode) {
-                MediaPlayer.REPEAT_MODE_NONE -> MediaPlayer.REPEAT_MODE_ALL
-                MediaPlayer.REPEAT_MODE_ALL -> MediaPlayer.REPEAT_MODE_ONE
-                MediaPlayer.REPEAT_MODE_ONE -> MediaPlayer.REPEAT_MODE_NONE
+                SessionPlayer.REPEAT_MODE_NONE -> SessionPlayer.REPEAT_MODE_ALL
+                SessionPlayer.REPEAT_MODE_ALL -> SessionPlayer.REPEAT_MODE_ONE
+                SessionPlayer.REPEAT_MODE_ONE -> SessionPlayer.REPEAT_MODE_NONE
                 else -> TODO()
             }
             logEvent("#repeatMode = ${mapRepeatMode(controller.repeatMode)}")
@@ -80,8 +73,8 @@ class MainActivity : AppCompatActivity() {
 
         buttonShuffle.setOnClickListener{
             controller.shuffleMode = when (controller.shuffleMode) {
-                MediaPlayer.SHUFFLE_MODE_NONE -> MediaPlayer.SHUFFLE_MODE_ALL
-                MediaPlayer.SHUFFLE_MODE_ALL -> MediaPlayer.SHUFFLE_MODE_NONE
+                SessionPlayer.SHUFFLE_MODE_NONE -> SessionPlayer.SHUFFLE_MODE_ALL
+                SessionPlayer.SHUFFLE_MODE_ALL -> SessionPlayer.SHUFFLE_MODE_NONE
                 else -> TODO()
             }
             logEvent("#shuffleMode = ${mapShuffleMode(controller.shuffleMode)}")
@@ -138,19 +131,19 @@ class MainActivity : AppCompatActivity() {
                     override fun onPlaybackInfoChanged(controller: MediaController, info: MediaController.PlaybackInfo) {
                     }
 
-//                    override fun onError(player: MediaPlayer, item: MediaItem, what: Int, extra: Int) {
+//                    override fun onError(player: SessionPlayer, item: MediaItem, what: Int, extra: Int) {
 //                        logEvent("[onError] what: $what, extra: $extra")
 //                    }
 //
-//                    override fun onInfo(player: MediaPlayer, item: MediaItem, what: Int, extra: Int) {
+//                    override fun onInfo(player: SessionPlayer, item: MediaItem, what: Int, extra: Int) {
 //                        logEvent("[onInfo]  what: ${mapInfoWhat(what)}, extra: $extra")
 //
-//                        if (what == MediaPlayer.MEDIA_INFO_METADATA_UPDATE) {
+//                        if (what == SessionPlayer.MEDIA_INFO_METADATA_UPDATE) {
 //                            seekBar.max = player.duration.toInt()
 //                            seekBar.progress = player.currentPosition.toInt()
 //
 //                        }
-//                        if (what == MediaPlayer.MEDIA_INFO_BUFFERING_UPDATE && !seekBarInTrackingTouch) {
+//                        if (what == SessionPlayer.MEDIA_INFO_BUFFERING_UPDATE && !seekBarInTrackingTouch) {
 //                            seekBar.max = player.duration.toInt()
 //                            seekBar.progress = player.currentPosition.toInt()
 //                        }
