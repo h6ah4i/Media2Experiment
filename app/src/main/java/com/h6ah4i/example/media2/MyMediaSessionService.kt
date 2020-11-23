@@ -16,69 +16,45 @@
 
 package com.h6ah4i.example.media2
 
-import android.content.Context
-import android.media.AudioManager
 import android.net.Uri
 import androidx.core.content.ContextCompat
-import androidx.media.AudioAttributesCompat
-import androidx.media2.common.MediaItem
 import androidx.media2.common.MediaMetadata
 import androidx.media2.common.UriMediaItem
-import androidx.media2.player.MediaPlayer
 import androidx.media2.session.MediaSession
 import androidx.media2.session.MediaSessionService
-import androidx.media2.session.SessionCommand
-import androidx.media2.session.SessionCommandGroup
+import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.ext.media2.DefaultMediaItemConverter
+import com.google.android.exoplayer2.ext.media2.SessionCallbackBuilder
+import com.google.android.exoplayer2.ext.media2.SessionPlayerConnector
 
 class MyMediaSessionService : MediaSessionService() {
-    lateinit var player: MediaPlayer
+    lateinit var exoPlayer: SimpleExoPlayer
+    lateinit var sessionPlayerConnector: SessionPlayerConnector
+    lateinit var sessionCallback: MediaSession.SessionCallback
+    lateinit var mediaSession: MediaSession
+
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
+        return mediaSession
+    }
 
     override fun onCreate() {
         super.onCreate()
 
-        player = MediaPlayer(this)
-
-        player.audioSessionId = (getSystemService(Context.AUDIO_SERVICE) as AudioManager)
-            .generateAudioSessionId()
-
-        player.setAudioAttributes(
-            AudioAttributesCompat.Builder()
-                .setContentType(AudioAttributesCompat.CONTENT_TYPE_MUSIC)
-                .setUsage(AudioAttributesCompat.USAGE_MEDIA)
-                .setLegacyStreamType(AudioManager.STREAM_MUSIC)
-                .build()
-        )
-    }
-
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession {
-        return MediaSession.Builder(this, player).setSessionCallback(ContextCompat
-            .getMainExecutor(this), object: MediaSession.SessionCallback() {
-            override fun onConnect(
-                session: MediaSession,
-                controller: MediaSession.ControllerInfo
-            ): SessionCommandGroup? {
-                return super.onConnect(session, controller)
-            }
-
-            override fun onCommandRequest(
-                session: MediaSession,
-                controller: MediaSession.ControllerInfo,
-                command: SessionCommand
-            ): Int {
-                return super.onCommandRequest(session, controller, command)
-            }
-
-            override fun onCreateMediaItem(
-                session: MediaSession,
-                controller: MediaSession.ControllerInfo,
-                mediaId: String
-            ): MediaItem? {
-                return UriMediaItem.Builder(Uri.parse(mediaId))
-                    .setMetadata(MediaMetadata.Builder()
+        exoPlayer = SimpleExoPlayer.Builder(this).build()
+        sessionPlayerConnector = SessionPlayerConnector(exoPlayer, object:
+            DefaultMediaItemConverter() {
+        })
+        sessionCallback = SessionCallbackBuilder(this, sessionPlayerConnector)
+            .setMediaItemProvider { session, controllerInfo, mediaId ->
+                UriMediaItem.Builder(Uri.parse(mediaId))
+                    .setMetadata(
+                        MediaMetadata.Builder()
                         .putString(MediaMetadata.METADATA_KEY_MEDIA_ID, mediaId)
                         .build()).build()
             }
-        }).build()
+            .build()
+        mediaSession = MediaSession.Builder(this, sessionPlayerConnector)
+            .setSessionCallback(ContextCompat.getMainExecutor(this), sessionCallback)
+            .build()
     }
-
 }
