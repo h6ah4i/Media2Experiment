@@ -196,6 +196,8 @@ class MainActivity : AppCompatActivity() {
             }.toList(),
             null
         )
+
+        player.prepare()
     }
 
 
