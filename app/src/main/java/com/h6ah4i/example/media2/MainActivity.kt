@@ -23,6 +23,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var songFiles: Array<String>
     lateinit var playlistAdapter: PlaylistAdapter
     var seekBarInTrackingTouch = false
+    var lastPlayerState = SessionPlayer.PLAYER_STATE_IDLE
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -154,8 +155,8 @@ class MainActivity : AppCompatActivity() {
                         logEvent("Maybe the issue has been reproduced! https://issuetracker.google.com/issues/156152491")
                     }
 
-                    override fun onPlayerStateChanged(controller: MediaController, playerState:
-                    Int) {
+                    override fun onPlayerStateChanged(controller: MediaController, playerState: Int) {
+                        lastPlayerState = playerState
                         textPlayerState.text = mapPlayerState(playerState)
 
                         logEvent("[onPlayerStateChanged] playerState: ${textPlayerState.text}")
@@ -173,8 +174,11 @@ class MainActivity : AppCompatActivity() {
                     override fun onCurrentMediaItemChanged(controller: MediaController, item: MediaItem?) {
                         logEvent("[onCurrentMediaItemChanged]")
                         playlistAdapter.setCurrentItem(controller.currentMediaItemIndex)
-                        seekBar.max = controller.duration.toInt()
-                        seekBar.progress = controller.currentPosition.toInt()
+
+                        if (lastPlayerState != SessionPlayer.PLAYER_STATE_IDLE) {
+                            seekBar.max = controller.duration.toInt()
+                            seekBar.progress = controller.currentPosition.toInt()
+                        }
                     }
 
                     override fun onConnected(
@@ -196,8 +200,10 @@ class MainActivity : AppCompatActivity() {
         val r: Runnable = object : Runnable {
             override fun run() {
                 if (!seekBarInTrackingTouch) {
-                    seekBar.max = controller.duration.toInt()
-                    seekBar.progress = controller.currentPosition.toInt()
+                    if (lastPlayerState != SessionPlayer.PLAYER_STATE_IDLE) {
+                        seekBar.max = controller.duration.toInt()
+                        seekBar.progress = controller.currentPosition.toInt()
+                    }
                 }
 
                 handler.postDelayed(this, 1000)
