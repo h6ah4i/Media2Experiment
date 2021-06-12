@@ -78,10 +78,10 @@ class MyMediaSessionService : MediaSessionService() {
 
         // NOTE:
         // Using dedicated thread causes infinite blocking in onUpdateNotification() method. Using main thread can avoid the issue.
-//        mediaSessionCallbackExecutor = Executors.newSingleThreadExecutor { runnable ->
-//            Thread(runnable, "MediaSessionCallbackExecutorThread")
-//        }
-        mediaSessionCallbackExecutor = ContextCompat.getMainExecutor(this)
+        mediaSessionCallbackExecutor = Executors.newSingleThreadExecutor { runnable ->
+            Thread(runnable, "MediaSessionCallbackExecutorThread")
+        }
+//        mediaSessionCallbackExecutor = ContextCompat.getMainExecutor(this)
 
         mediaSession = MediaSession.Builder(this, sessionPlayerConnector)
             .setSessionCallback(mediaSessionCallbackExecutor, sessionCallback)
