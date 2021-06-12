@@ -16,23 +16,23 @@
 
 package com.h6ah4i.example.media2
 
+import android.media.AudioManager
 import android.util.Log
 import android.net.Uri
 import androidx.core.content.ContextCompat
+import androidx.media.AudioAttributesCompat
+import androidx.media2.common.MediaItem
 import androidx.media2.common.MediaMetadata
 import androidx.media2.common.SessionPlayer
 import androidx.media2.common.UriMediaItem
+import androidx.media2.player.MediaPlayer
 import androidx.media2.session.MediaSession
 import androidx.media2.session.MediaSessionService
-import com.google.android.exoplayer2.SimpleExoPlayer
-import com.google.android.exoplayer2.ext.media2.SessionCallbackBuilder
-import com.google.android.exoplayer2.ext.media2.SessionPlayerConnector
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 
 class MyMediaSessionService : MediaSessionService() {
-    lateinit var exoPlayer: SimpleExoPlayer
-    lateinit var sessionPlayerConnector: SessionPlayerConnector
+    lateinit var sessionPlayerConnector: SessionPlayer
     lateinit var sessionCallback: MediaSession.SessionCallback
     lateinit var mediaSessionCallbackExecutor: Executor
     lateinit var mediaSession: MediaSession
@@ -44,18 +44,24 @@ class MyMediaSessionService : MediaSessionService() {
     override fun onCreate() {
         super.onCreate()
 
-        exoPlayer = SimpleExoPlayer.Builder(this).build()
-        sessionPlayerConnector = SessionPlayerConnector(exoPlayer)
+        sessionPlayerConnector = MediaPlayer(this).apply {
+            setAudioAttributes(AudioAttributesCompat.Builder()
+                .setContentType(AudioAttributesCompat.CONTENT_TYPE_MUSIC)
+                .setUsage(AudioAttributesCompat.USAGE_MEDIA)
+                .setLegacyStreamType(AudioManager.STREAM_MUSIC).build())
+        }
         val callback = object : SessionPlayer.PlayerCallback() {
             override fun onPlayerStateChanged(player: SessionPlayer, playerState: Int) {
 
+                // media2-player seems broken... it does not transit to the error state...
                 if (playerState == SessionPlayer.PLAYER_STATE_ERROR) {
                     // Error handling
                     ContextCompat.getMainExecutor(this@MyMediaSessionService).execute {
                         // re-create the player instance
+
                         val currentPlaylist = sessionPlayerConnector.playlist
                         sessionPlayerConnector.close()
-                        sessionPlayerConnector = SessionPlayerConnector(exoPlayer)
+                        sessionPlayerConnector = MediaPlayer(this@MyMediaSessionService)
                         sessionPlayerConnector.registerPlayerCallback(ContextCompat.getMainExecutor(this@MyMediaSessionService), this)
                         if (currentPlaylist != null) {
                             sessionPlayerConnector.setPlaylist(currentPlaylist, null)
@@ -66,18 +72,23 @@ class MyMediaSessionService : MediaSessionService() {
             }
         }
         sessionPlayerConnector.registerPlayerCallback(ContextCompat.getMainExecutor(this), callback)
-        sessionCallback = SessionCallbackBuilder(this, sessionPlayerConnector)
-            .setMediaItemProvider { session, controllerInfo, mediaId ->
-                UriMediaItem.Builder(Uri.parse(mediaId))
+        sessionCallback = object : MediaSession.SessionCallback() {
+            override fun onCreateMediaItem(
+                session: MediaSession,
+                controller: MediaSession.ControllerInfo,
+                mediaId: String
+            ): MediaItem? {
+                return UriMediaItem.Builder(Uri.parse(mediaId))
                     .setMetadata(
                         MediaMetadata.Builder()
                         .putString(MediaMetadata.METADATA_KEY_MEDIA_ID, mediaId)
                         .build()).build()
             }
-            .build()
+        }
 
         // NOTE:
-        // Using dedicated thread causes infinite blocking in onUpdateNotification() method. Using main thread can avoid the issue.
+        // ~~Using dedicated thread causes infinite blocking in onUpdateNotification() method. Using main thread can avoid the issue.~~
+        // The media2-player implementation does not cause the issue.
 //        mediaSessionCallbackExecutor = Executors.newSingleThreadExecutor { runnable ->
 //            Thread(runnable, "MediaSessionCallbackExecutorThread")
 //        }
