@@ -99,7 +99,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initPlayer() {
-        songFiles = arrayOf("behind_enemy_lines", "black_knight", "hit_n_smash", "new_hero_in_town")
+        songFiles = arrayOf("behind_enemy_lines", "black_knight", "hit_n_smash", "new_hero_in_town", "ERROR_NO_EXIST_FILE")
 
         controller = MediaController.Builder(this)
             .setSessionToken(SessionToken(this, ComponentName(this, MyMediaSessionService::class.java)))
